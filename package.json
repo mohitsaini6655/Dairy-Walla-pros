@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "firebase": "^12.13.0"
+  }
+}
