@@ -24,7 +24,7 @@ export function SignupPage() {
   const [role, setRole] = useState<Role>("shopkeeper");
   const [distributorType, setDistributorType] = useState<DistributorType>("dual");
   const [emailInput, setEmailInput] = useState("");
-  const [useEmailAuth, setUseEmailAuth] = useState(false);
+  const [useEmailAuth, setUseEmailAuth] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const { signIn, manualRegister, isAuthenticated, user } = useAuthStore();
@@ -73,7 +73,7 @@ export function SignupPage() {
     } catch (error: any) {
       console.error("Signup Error:", error);
       if (error?.code === 'auth/configuration-not-found' || error?.message?.includes('configuration-not-found')) {
-        show("Firebase Authentication is not enabled in Firebase Console yet. Enable Google Sign-In under Authentication > Sign-in method.", "error");
+        show("Firebase Authentication is disabled in Firebase Console. Please click 'Get Started' in Firebase Console > Authentication.", "error");
       } else {
         show(error?.message || "Signup failed", "error");
       }
@@ -196,7 +196,7 @@ export function SignupPage() {
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="Enter your email to sign up"
+                    placeholder="e.g. user@gmail.com"
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                   />
                 </div>
@@ -211,13 +211,18 @@ export function SignupPage() {
                     "Register with Email"
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setUseEmailAuth(false)}
-                  className="w-full text-xs text-gray-500 hover:text-gray-700 py-1 text-center"
-                >
-                  ← Back to Google Registration
-                </button>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={handleSignup}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-xl text-xs transition-all shadow-sm"
+                  >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
+                    Or Continue with Google
+                  </button>
+                </div>
               </form>
             ) : (
               <div className="space-y-3">
