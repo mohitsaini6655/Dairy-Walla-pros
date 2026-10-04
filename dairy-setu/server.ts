@@ -94,15 +94,8 @@ function initializeFirebaseAdmin() {
     return getFirebaseAdminAuth();
   }
 
-  // In development mode, return null to skip Firebase auth requirement
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('⚠️  Firebase credentials not configured. Running in development mode without Firebase auth.');
-    return null;
-  }
-
-  throw new Error(
-    'Firebase Admin credentials are required in production. Set FIREBASE_SERVICE_ACCOUNT_KEY, FIREBASE_SERVICE_ACCOUNT_BASE64, or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY in Render environment variables.'
-  );
+  console.warn('⚠️  Firebase Admin credentials not configured. Running with email/manual authentication mode.');
+  return null;
 }
 const adminAuth = initializeFirebaseAdmin();
 
@@ -136,11 +129,11 @@ async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextF
     }
   }
 
-  // In development mode without Firebase, skip auth requirement
+  // If Firebase Admin is not configured, check for dev email header or return 401
   if (!adminAuth) {
     const devEmail = String(req.headers['x-dev-auth-email'] || '').trim().toLowerCase();
     if (!devEmail || !devEmail.includes('@')) {
-      return res.status(401).json({ error: 'Development auth email missing. Please sign in with Google again.' });
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
     }
     req.authEmail = devEmail;
     req.authUid = String(req.headers['x-dev-auth-uid'] || 'dev-uid');

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --configLoader native",
     "start:api": "tsx server.ts",
+    "seed": "npx tsx seed.ts",
     "build:api": "prisma generate && prisma db push",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
