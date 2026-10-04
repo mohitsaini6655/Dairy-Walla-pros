@@ -1,6 +1,15 @@
 {
+  "name": "dairy-walla-root",
+  "private": true,
+  "scripts": {
+    "build": "cd dairy-setu && npm install && npx prisma generate && npm run build",
+    "start": "cd dairy-setu && npm run start:api"
+  },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "firebase": "^12.13.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }

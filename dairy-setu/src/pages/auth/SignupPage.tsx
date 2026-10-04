@@ -72,8 +72,10 @@ export function SignupPage() {
       }
     } catch (error: any) {
       console.error("Signup Error:", error);
-      if (error?.code === 'auth/configuration-not-found' || error?.message?.includes('configuration-not-found')) {
-        show("Firebase Authentication is disabled in Firebase Console. Please click 'Get Started' in Firebase Console > Authentication.", "error");
+      if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
+        show(`Domain "${window.location.hostname}" is not in Authorized Domains. Add it in Firebase Console > Authentication > Settings > Authorized Domains.`, "error");
+      } else if (error?.code === 'auth/configuration-not-found' || error?.message?.includes('configuration-not-found')) {
+        show("Google Provider is not enabled in Firebase Console. Go to Authentication > Sign-in method > Google and click Enable.", "error");
       } else {
         show(error?.message || "Signup failed", "error");
       }

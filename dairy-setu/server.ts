@@ -150,7 +150,7 @@ async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextF
 }
 
 app.use('/api', (req, res, next) => {
-  if (req.path === '/ping') {
+  if (req.path === '/ping' || req.path === '/health') {
     return next();
   }
   if (req.path.startsWith('/admin')) {

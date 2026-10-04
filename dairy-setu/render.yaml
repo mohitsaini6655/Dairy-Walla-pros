@@ -2,7 +2,6 @@ services:
   - type: web
     name: dairy-walla-api
     runtime: node
-    rootDir: dairy-setu
     buildCommand: npm install && npx prisma generate
     startCommand: npm run start:api
     envVars:

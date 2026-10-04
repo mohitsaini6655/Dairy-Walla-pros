@@ -115,8 +115,10 @@ export function LoginPage() {
       }
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      if (err?.code === 'auth/configuration-not-found' || err?.message?.includes('configuration-not-found')) {
-        show("Firebase Authentication is disabled in Firebase Console. Please click 'Get Started' in Firebase Console > Authentication.", "error");
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        show(`Domain "${window.location.hostname}" is not in Authorized Domains. Add it in Firebase Console > Authentication > Settings > Authorized Domains.`, "error");
+      } else if (err?.code === 'auth/configuration-not-found' || err?.message?.includes('configuration-not-found')) {
+        show("Google Provider is not enabled in Firebase Console. Go to Authentication > Sign-in method > Google and click Enable.", "error");
       } else {
         show(err?.message || "Google Login failed", "error");
       }
