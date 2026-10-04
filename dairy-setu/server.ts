@@ -10,8 +10,25 @@ import {
   registerPushToken,
 } from './services/pushNotifications.ts';
 import cron from 'node-cron';
+import { existsSync } from 'fs';
 
-const prisma = new PrismaClient();
+// Explicitly load .env file if available in Node 20+
+if (typeof process.loadEnvFile === 'function' && existsSync('.env')) {
+  try {
+    process.loadEnvFile('.env');
+  } catch (err) {
+    console.warn('Could not load .env file via process.loadEnvFile:', err);
+  }
+}
+
+const DATABASE_URL = process.env.DATABASE_URL || 'mongodb+srv://mksaini746889_db_user:TLPDi5a6lkz51lkq@cluster0.6yjvglk.mongodb.net/dairywalla?retryWrites=true&w=majority';
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: DATABASE_URL
+    }
+  }
+});
 const pushNotifications = createPushNotificationService(prisma);
 const app = express();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '*13579*admin';
