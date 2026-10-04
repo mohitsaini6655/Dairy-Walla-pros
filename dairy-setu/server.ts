@@ -119,6 +119,43 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
+// Retell AI Voice Call Session Generator
+app.post('/api/retell/create-web-call', async (req, res) => {
+  const retellApiKey = process.env.RETELL_API_KEY;
+  const agentId = process.env.RETELL_AGENT_ID || req.body?.agentId || 'llm_fa5670221158377c00592a2ceafe';
+
+  if (!retellApiKey) {
+    return res.status(200).json({
+      configured: false,
+      message: 'Retell API Key not set. Using browser AI voice calling engine.',
+      agentName: 'Aryan (DairyWalla AI Assistant)',
+      supportNumber: '+917627047702'
+    });
+  }
+
+  try {
+    const axios = (await import('axios')).default;
+    const response = await axios.post(
+      'https://api.retellai.com/v2/create-web-call',
+      { agent_id: agentId },
+      {
+        headers: {
+          Authorization: `Bearer ${retellApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return res.json(response.data);
+  } catch (err: any) {
+    console.warn('Retell API web call creation failed:', err?.response?.data || err.message);
+    return res.status(200).json({
+      configured: false,
+      error: err?.message,
+      message: 'Falling back to browser AI voice calling engine'
+    });
+  }
+});
+
 async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   // Check authorization header first for manual or firebase tokens
   const authHeader = req.headers.authorization;
@@ -164,7 +201,7 @@ async function requireAuth(req: AuthenticatedRequest, res: Response, next: NextF
 }
 
 app.use('/api', (req, res, next) => {
-  if (req.path === '/ping' || req.path === '/health') {
+  if (req.path === '/ping' || req.path === '/health' || req.path.startsWith('/retell')) {
     return next();
   }
   if (req.path.startsWith('/admin')) {

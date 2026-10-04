@@ -36,6 +36,7 @@ import { ShareLinkHandler } from './pages/ShareLinkHandler';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsConditionsPage } from './pages/TermsConditionsPage';
 import { ToastContainer } from './components/ui/Toast';
+import { DairyWallaAIAgent } from './components/ai/DairyWallaAIAgent';
 import { useAuthStore } from './store/authStore';
 import { useAppStore } from './store/appStore';
 
@@ -312,6 +313,7 @@ export default function App() {
       <BrowserRouter>
         <AppWithAuth />
         <ToastContainer />
+        <DairyWallaAIAgent />
       </BrowserRouter>
     </QueryClientProvider>
   );
