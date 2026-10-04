@@ -121,8 +121,8 @@ app.get('/api/health', async (_req, res) => {
 
 // Retell AI Voice Call Session Generator
 app.post('/api/retell/create-web-call', async (req, res) => {
-  const retellApiKey = process.env.RETELL_API_KEY;
-  const agentId = process.env.RETELL_AGENT_ID || req.body?.agentId || 'llm_fa5670221158377c00592a2ceafe';
+  const retellApiKey = req.body?.apiKey || process.env.RETELL_API_KEY;
+  const agentId = req.body?.agentId || process.env.RETELL_AGENT_ID || 'llm_fa5670221158377c00592a2ceafe';
 
   if (!retellApiKey) {
     return res.status(200).json({
