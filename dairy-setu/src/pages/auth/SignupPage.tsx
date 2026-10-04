@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, ShieldCheck, Store, Truck } from "lucide-react";
-import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "firebase/auth";
-import { auth as firebaseAuth } from "../../lib/firebase";
+import { getRedirectResult, signOut as firebaseSignOut } from "firebase/auth";
+import { auth as firebaseAuth, signInWithGoogle } from "../../lib/firebase";
 import { useAuthStore } from "../../store/authStore";
 import { useToast } from "../../components/ui/Toast";
 import { BrandLogo } from "../../components/ui/BrandLogo";
@@ -37,22 +37,59 @@ export function SignupPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
+  useEffect(() => {
+    let active = true;
+    getRedirectResult(firebaseAuth).then(async (result) => {
+      if (!active || !result?.user?.email) return;
+      setLoading(true);
+      const emailVal = result.user.email;
+      const savedRole = (localStorage.getItem("dairy-walla-pending-role") as Role) || role;
+      const savedType = (localStorage.getItem("dairy-walla-pending-distributor-type") as DistributorType) || distributorType;
+
+      const signupResult = await signIn(emailVal, savedRole);
+      if (signupResult.needsProfile) {
+        if (savedRole === "distributor") {
+          navigate(`/confirm?role=${savedRole}&type=${savedType}`);
+        } else {
+          navigate(`/confirm?role=${savedRole}`);
+        }
+      } else if (signupResult.user) {
+        show("Account already exists. Logging you in.");
+        navigate(signupResult.user.role === "distributor" ? "/distributor" : "/shop", { replace: true });
+      }
+    }).catch((err) => {
+      console.warn("Mobile Redirect Signup Error:", err);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleSignup = async () => {
     setLoading(true);
     try {
+      localStorage.setItem("dairy-walla-pending-role", role);
+      if (role === "distributor") {
+        localStorage.setItem("dairy-walla-pending-distributor-type", distributorType);
+      }
+
       await firebaseSignOut(firebaseAuth);
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const result = await signInWithPopup(firebaseAuth, provider);
-      const emailVal = result.user.email;
+      const googleUser = await signInWithGoogle();
+      if (!googleUser) {
+        // Redirect initiated on mobile
+        return;
+      }
+
+      const emailVal = googleUser.email;
       if (!emailVal) throw new Error("Email not found from Google");
 
       const signupResult = await signIn(emailVal, role);
 
       if (signupResult.needsProfile) {
-        localStorage.setItem("dairy-walla-pending-role", role);
         if (role === "distributor") {
-          localStorage.setItem("dairy-walla-pending-distributor-type", distributorType);
           navigate(`/confirm?role=${role}&type=${distributorType}`);
         } else {
           localStorage.removeItem("dairy-walla-pending-distributor-type");
