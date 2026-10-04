@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { browserLocalPersistence, getAuth, GoogleAuthProvider, setPersistence, signInWithPopup } from 'firebase/auth';
+import { browserLocalPersistence, getAuth, getRedirectResult, GoogleAuthProvider, setPersistence, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
@@ -22,9 +22,39 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-export const signInWithGoogle = async () => {
-  return await signInWithPopup(auth, googleProvider);
+const isMobileBrowser = () => {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent || '';
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
 };
+
+export const signInWithGoogle = async () => {
+  if (isMobileBrowser()) {
+    console.log('Mobile device detected, using signInWithRedirect for mobile COOP safety');
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  }
+
+  try {
+    const res = await signInWithPopup(auth, googleProvider);
+    return res.user;
+  } catch (err: any) {
+    console.warn('signInWithPopup failed, falling back to signInWithRedirect:', err);
+    if (
+      err?.code === 'auth/popup-blocked' ||
+      err?.code === 'auth/popup-closed-by-user' ||
+      err?.code === 'auth/cancelled-popup-request' ||
+      err?.message?.includes('cross origin') ||
+      err?.message?.includes('closed')
+    ) {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    throw err;
+  }
+};
+
+export { getRedirectResult };
 
 export const analyticsPromise = isSupported().then((supported) => (supported ? getAnalytics(app) : null));
 

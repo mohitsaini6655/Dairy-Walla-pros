@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        value: mongodb+srv://mksaini746889_db_user:TLPDi5a6lkz51lkq@cluster0.6yjvglk.mongodb.net/dairywalla?retryWrites=true&w=majority
       - key: FIREBASE_PROJECT_ID
         value: dairy-walla-cc77f
       - key: FIREBASE_CLIENT_EMAIL

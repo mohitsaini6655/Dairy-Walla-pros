@@ -21,7 +21,11 @@ if (typeof process.loadEnvFile === 'function' && existsSync('.env')) {
   }
 }
 
-const DATABASE_URL = process.env.DATABASE_URL || 'mongodb+srv://mksaini746889_db_user:TLPDi5a6lkz51lkq@cluster0.6yjvglk.mongodb.net/dairywalla?retryWrites=true&w=majority';
+if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('mongo')) {
+  process.env.DATABASE_URL = 'mongodb+srv://mksaini746889_db_user:TLPDi5a6lkz51lkq@cluster0.6yjvglk.mongodb.net/dairywalla?retryWrites=true&w=majority';
+}
+
+const DATABASE_URL = process.env.DATABASE_URL;
 const prisma = new PrismaClient({
   datasources: {
     db: {
