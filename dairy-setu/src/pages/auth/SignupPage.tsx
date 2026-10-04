@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, Store, Truck } from "lucide-react";
+import { Mail, ShieldCheck, Store, Truck } from "lucide-react";
 import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "firebase/auth";
 import { auth as firebaseAuth } from "../../lib/firebase";
 import { useAuthStore } from "../../store/authStore";
@@ -23,9 +23,11 @@ const DISTRIBUTOR_TYPES: Array<{
 export function SignupPage() {
   const [role, setRole] = useState<Role>("shopkeeper");
   const [distributorType, setDistributorType] = useState<DistributorType>("dual");
+  const [emailInput, setEmailInput] = useState("");
+  const [useEmailAuth, setUseEmailAuth] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { signIn, isAuthenticated, user } = useAuthStore();
+  const { signIn, manualRegister, isAuthenticated, user } = useAuthStore();
   const { show } = useToast();
   const navigate = useNavigate();
 
@@ -38,7 +40,6 @@ export function SignupPage() {
   const handleSignup = async () => {
     setLoading(true);
     try {
-      // Always start signup with explicit account selection to avoid reusing previous Google session.
       await firebaseSignOut(firebaseAuth);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
@@ -71,7 +72,39 @@ export function SignupPage() {
       }
     } catch (error: any) {
       console.error("Signup Error:", error);
-      show(error.message || "Signup failed", "error");
+      if (error?.code === 'auth/configuration-not-found' || error?.message?.includes('configuration-not-found')) {
+        show("Firebase Authentication is not enabled in Firebase Console yet. Enable Google Sign-In under Authentication > Sign-in method.", "error");
+      } else {
+        show(error?.message || "Signup failed", "error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput.trim()) {
+      show("Please enter your email address", "error");
+      return;
+    }
+    setLoading(true);
+    try {
+      const regResult = await manualRegister(emailInput.trim(), role);
+      if (regResult.success) {
+        localStorage.setItem("dairy-walla-pending-role", role);
+        if (role === "distributor") {
+          localStorage.setItem("dairy-walla-pending-distributor-type", distributorType);
+          navigate(`/confirm?role=${role}&type=${distributorType}`);
+        } else {
+          localStorage.removeItem("dairy-walla-pending-distributor-type");
+          navigate(`/confirm?role=${role}`);
+        }
+      } else if (regResult.error) {
+        show(regResult.error, "error");
+      }
+    } catch (err: any) {
+      show(err?.message || "Registration failed", "error");
     } finally {
       setLoading(false);
     }
@@ -154,20 +187,65 @@ export function SignupPage() {
               </div>
             )}
 
-            <button
-              onClick={handleSignup}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                  Continue with Google
-                </>
-              )}
-            </button>
+            {useEmailAuth ? (
+              <form onSubmit={handleEmailSignupSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="Enter your email to sign up"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98] flex items-center justify-center"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Register with Email"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseEmailAuth(false)}
+                  className="w-full text-xs text-gray-500 hover:text-gray-700 py-1 text-center"
+                >
+                  ← Back to Google Registration
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={handleSignup}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                      Continue with Google
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setUseEmailAuth(true)}
+                  className="w-full flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-900 py-2 border border-dashed border-gray-300 rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  <Mail className="w-4 h-4 text-gray-500" />
+                  Or Register with Email
+                </button>
+              </div>
+            )}
           </div>
 
           <p className="text-center text-sm text-gray-600 mt-5">
